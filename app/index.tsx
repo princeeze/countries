@@ -7,9 +7,9 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { FontAwesome, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import Feather from "@expo/vector-icons/Feather";
-import tw, { useAppColorScheme, useDeviceContext } from "twrnc";
+import tw, { useAppColorScheme } from "twrnc";
 import { Image } from "expo-image";
 // @ts-ignore
 import logo from "@/assets/images/ex_logo.png";
@@ -17,13 +17,9 @@ import logo from "@/assets/images/ex_logo.png";
 import darkLogo from "@/assets/images/ex_logo_dark.png";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { fetch } from "expo/fetch";
-import { AllCountries } from "@/lib/types";
-import { useEffect, useMemo } from "react";
-import * as SystemUI from "expo-system-ui";
-export type SortedCountries = {
-  title: string;
-  data: AllCountries[];
-};
+import { AllCountries, SortedCountries } from "@/lib/types";
+import { useMemo } from "react";
+import { StatusBar } from "expo-status-bar";
 
 type Sections = {
   [key: string]: AllCountries[];
@@ -31,12 +27,8 @@ type Sections = {
 export default function Home() {
   const router = useRouter();
   const [colorScheme, toggleColorScheme] = useAppColorScheme(tw);
-  useEffect(() => {
-    SystemUI.setBackgroundColorAsync(
-      colorScheme === "dark" ? "#000F24" : "#fff"
-    );
-  }, [colorScheme]);
 
+  // fetch countries
   const getCountries = async (): Promise<SortedCountries[]> => {
     const response = await fetch(
       "https://restcountries.com/v3.1/all?fields=name,capital,flags,cca3,population,region,languages,area"
@@ -50,7 +42,6 @@ export default function Home() {
       }
       sections[firstLetter].push(country);
     });
-
     const sectionKeys = Object.keys(sections).sort();
     const sortedSections = sectionKeys.map((letter) => {
       return {
@@ -69,6 +60,7 @@ export default function Home() {
     queryFn: getCountries,
   });
 
+  // Components
   const renderSectionHeader = ({ section }: { section: SortedCountries }) => (
     <View style={tw`py-2 px-4 bg-white dark:bg-[#000F24]`}>
       <Text style={tw`text-sm font-semibold text-gray-500 dark:text-gray-400`}>
@@ -197,6 +189,7 @@ export default function Home() {
           />
         )}
       </View>
+      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
     </SafeAreaView>
   );
 }

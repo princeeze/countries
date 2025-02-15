@@ -1,28 +1,18 @@
-import { AllCountries } from "@/lib/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useMemo } from "react";
 import { View, Text } from "react-native";
 import tw, { useAppColorScheme } from "twrnc";
-import { SortedCountries } from "..";
+import type { SortedCountries } from "@/lib/types";
 import { Image } from "expo-image";
 
 export default function Country() {
-  const navigation = useNavigation();
   const { id } = useLocalSearchParams();
-
+  const navigation = useNavigation();
   const queryClient = useQueryClient();
-  const cachedData: SortedCountries[] =
-    queryClient.getQueryData(["allCountries"]) ?? [];
-  const country = useMemo(() => {
-    return cachedData
-      .flatMap((group) => group.data)
-      .find(
-        (country) => country.cca3.toLowerCase() === id?.toString().toLowerCase()
-      );
-  }, [cachedData, id]);
-
   const [colorScheme] = useAppColorScheme(tw);
+
+  //set header options
   useEffect(() => {
     navigation.setOptions({
       headerShown: true,
@@ -34,6 +24,18 @@ export default function Country() {
     });
   }, [navigation]);
 
+  // get and sort cached data
+  const cachedData: SortedCountries[] =
+    queryClient.getQueryData(["allCountries"]) ?? [];
+  const country = useMemo(() => {
+    return cachedData
+      .flatMap((group) => group.data)
+      .find(
+        (country) => country.cca3.toLowerCase() === id?.toString().toLowerCase()
+      );
+  }, [cachedData, id]);
+
+  // components
   const CountryDetail = ({ title, data }: { title: string; data: any }) => {
     return (
       <View style={tw`gap-2 flex-row items-center`}>
