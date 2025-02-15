@@ -5,6 +5,7 @@ import { View, Text } from "react-native";
 import tw, { useAppColorScheme } from "twrnc";
 import type { SortedCountries } from "@/lib/types";
 import { Image } from "expo-image";
+import PagerView from "react-native-pager-view";
 
 export default function Country() {
   const { id } = useLocalSearchParams();
@@ -47,10 +48,18 @@ export default function Country() {
 
   return (
     <View style={tw`flex-1 gap-6 px-5 py-4 bg-white dark:bg-[#000F24]`}>
-      <Image
-        source={{ uri: country?.flags.png }}
-        style={tw`w-full h-52 rounded-lg`}
-      />
+      <PagerView style={tw`h-52`} initialPage={0}>
+        <Image
+          key={1}
+          source={{ uri: country?.flags.png }}
+          style={tw`w-full h-full rounded-lg`}
+        />
+        <Image
+          key={2}
+          source={{ uri: country?.coatOfArms?.png }}
+          style={tw`w-full h-full rounded-lg`}
+        />
+      </PagerView>
 
       <View style={tw`gap-2`}>
         <CountryDetail title="Population" data={country?.population} />
