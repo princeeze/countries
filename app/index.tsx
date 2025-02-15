@@ -1,29 +1,25 @@
 import {
   View,
   TextInput,
-  ScrollView,
   TouchableOpacity,
   Text,
-  Button,
-  Pressable,
   SectionList,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import Feather from "@expo/vector-icons/Feather";
-import tw from "twrnc";
+import tw, { useAppColorScheme, useDeviceContext } from "twrnc";
 import { Image } from "expo-image";
 // @ts-ignore
 import logo from "@/assets/images/ex_logo.png";
-import {
-  useQuery,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+// @ts-ignore
+import darkLogo from "@/assets/images/ex_logo_dark.png";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { fetch } from "expo/fetch";
 import { AllCountries } from "@/lib/types";
-
+import { useEffect, useMemo } from "react";
+import * as SystemUI from "expo-system-ui";
 export type SortedCountries = {
   title: string;
   data: AllCountries[];
@@ -34,9 +30,17 @@ type Sections = {
 };
 export default function Home() {
   const router = useRouter();
+  const [colorScheme, toggleColorScheme] = useAppColorScheme(tw);
+  useEffect(() => {
+    SystemUI.setBackgroundColorAsync(
+      colorScheme === "dark" ? "#000F24" : "#fff"
+    );
+  }, [colorScheme]);
 
   const getCountries = async (): Promise<SortedCountries[]> => {
-    const response = await fetch("https://restcountries.com/v3.1/all");
+    const response = await fetch(
+      "https://restcountries.com/v3.1/all?fields=name,capital,flags,cca3,population,region,languages,area"
+    );
     const unSorterdCountries: AllCountries[] = await response.json();
     const sections: Sections = {};
     unSorterdCountries.forEach((country) => {
@@ -60,102 +64,124 @@ export default function Home() {
   };
 
   // Queries
-  const { data, isPending } = useSuspenseQuery({
+  const { data } = useSuspenseQuery({
     queryKey: ["allCountries"],
     queryFn: getCountries,
   });
 
   const renderSectionHeader = ({ section }: { section: SortedCountries }) => (
-    <View style={tw`py-2 px-4 bg-white dark:bg-gray-800`}>
+    <View style={tw`py-2 px-4 bg-white dark:bg-[#000F24]`}>
       <Text style={tw`text-sm font-semibold text-gray-500 dark:text-gray-400`}>
         {section.title}
       </Text>
     </View>
   );
 
-  const renderCountryItem = ({ item }: { item: AllCountries }) => (
-    <TouchableOpacity
-      style={tw`flex-row items-center p-4 bg-white dark:bg-gray-900`}
-      onPress={() => router.push(`/country/${item.cca3.toLowerCase()}`)}
-    >
-      <Image
-        source={{ uri: item.flags.png }}
-        style={tw`w-9 h-9 rounded-lg mr-4`}
-        contentFit="cover"
-      />
-      <View>
-        <Text style={tw`font-semibold text-black dark:text-white`}>
-          {item.name.common}
-        </Text>
-        <Text style={tw`text-gray-500 dark:text-gray-400`}>
-          {item.capital?.[0] || "No capital"}
-        </Text>
-      </View>
-    </TouchableOpacity>
+  const renderCountryItem = useMemo(
+    () =>
+      ({ item }: { item: AllCountries }) =>
+        (
+          <TouchableOpacity
+            style={tw`flex-row items-center p-4 bg-white dark:bg-[#000F24]`}
+            onPress={() => router.push(`/country/${item.cca3.toLowerCase()}`)}
+          >
+            <Image
+              source={{ uri: item.flags.png }}
+              style={tw`w-9 h-9 rounded-lg mr-4`}
+              contentFit="cover"
+            />
+            <View>
+              <Text style={tw`font-semibold text-black dark:text-white`}>
+                {item.name.common}
+              </Text>
+              <Text style={tw`text-gray-500 dark:text-gray-400`}>
+                {item.capital?.[0] || "No capital"}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ),
+    [data]
   );
 
   return (
-    <SafeAreaView style={tw`flex-1 bg-white dark:bg-gray-900`}>
+    <SafeAreaView style={tw`flex-1 bg-white dark:bg-[#000F24]`}>
       <View style={tw`flex-1`}>
         <View style={tw`p-4`}>
           <View style={tw`justify-between flex-row items-center`}>
             <Image
               source={logo}
-              style={tw`text-2xl w-32 h-7 font-bold my-4 text-black dark:text-white`}
+              style={tw`text-2xl w-32  h-7 dark:hidden font-bold my-4 text-black dark:text-white`}
+            />
+            <Image
+              source={darkLogo}
+              style={tw`text-2xl w-32 h-7 hidden dark:flex font-bold my-4 text-black dark:text-white`}
             />
             <TouchableOpacity
-              style={tw`p-2 rounded-full bg-gray-100 dark:bg-gray-800`}
+              onPress={() => toggleColorScheme()}
+              style={tw`p-2  rounded-full bg-gray-100 dark:bg-[#98A2B3]/20`}
             >
-              <Feather name="sun" size={24} color="black" />
+              <Feather
+                name="sun"
+                style={tw`dark:hidden`}
+                size={24}
+                color="black"
+              />
+              <Feather
+                name="moon"
+                style={tw`hidden dark:flex`}
+                size={24}
+                color="white"
+              />
             </TouchableOpacity>
           </View>
 
           <View
-            style={tw`flex-row items-center mb-5 rounded-lg px-4 bg-[#F2F4F7] dark:bg-gray-800`}
+            style={tw`flex-row items-center mb-5 mt-2 rounded-lg px-4 bg-[#F2F4F7] dark:bg-gray-800`}
           >
             <Feather
               name="search"
               size={20}
-              style={tw`text-gray-500 dark:text-gray-400`}
+              style={tw`text-gray-500 dark:text-[#EAECF0]`}
             />
             <TextInput
               placeholder="Search Country"
-              style={tw`ml-2 flex-1 py-3 text-black dark:text-white`}
+              placeholderTextColor={"#EAECF0"}
+              style={tw`ml-2 flex-1 py-3 text-black dark:text-[#EAECF0]`}
             />
           </View>
 
           <View style={tw`flex-row justify-between mb-4`}>
             <TouchableOpacity
-              style={tw`flex-row rounded-sm bg-white gap-0.5 border-[#A9B8D4] border-[0.5px] px-3 py-2 justify-center items-center`}
+              style={tw`flex-row rounded-sm light:bg-white gap-0.5 border-[#A9B8D4] border-[0.5px] px-3 py-2 justify-center items-center`}
             >
               <Ionicons
                 name="globe-outline"
                 size={20}
-                style={tw`text-black dark:text-white`}
+                style={tw`text-black dark:text-white/70`}
               />
               <Text
-                style={tw`ml-1 text-black small-caps text-xs dark:text-white`}
+                style={tw`ml-1 text-black small-caps text-xs dark:text-white/70`}
               >
                 EN
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={tw`flex-row rounded-sm gap-0.5 bg-[#FCFCFD] border-[#A9B8D4] border-[0.5px] px-3 py-2 justify-center items-center`}
+              style={tw`flex-row rounded-sm gap-0.5 light:bg-[#FCFCFD] border-[#A9B8D4] border-[0.5px] px-3 py-2 justify-center items-center`}
             >
               <Ionicons
                 name="funnel-outline"
                 size={20}
-                style={tw`text-black dark:text-white`}
+                style={tw`text-black dark:text-white/70`}
               />
-              <Text style={tw`ml-1 text-black text-xs dark:text-white`}>
+              <Text style={tw`ml-1 text-black text-xs dark:text-white/70`}>
                 Filter
               </Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {isPending ? (
+        {!data ? (
           <View style={tw`flex-1 justify-center items-center`}>
             <Text style={tw`text-black dark:text-white text-lg`}>
               Loading...
@@ -167,7 +193,6 @@ export default function Home() {
             renderItem={renderCountryItem}
             renderSectionHeader={renderSectionHeader}
             stickySectionHeadersEnabled
-            keyExtractor={(item) => item.cca3}
             contentContainerStyle={tw`pb-4`}
           />
         )}
