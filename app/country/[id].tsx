@@ -41,7 +41,13 @@ export default function Country() {
     return (
       <View style={tw`gap-2 flex-row items-center`}>
         <Text style={tw`font-semibold dark:text-[#F2F4F7]`}>{title}:</Text>
-        <Text style={tw`text-gray-500 dark:text-[#F2F4F7]`}>{data}</Text>
+        <Text
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          style={tw`text-gray-500 dark:text-[#F2F4F7] flex-1`}
+        >
+          {data}
+        </Text>
       </View>
     );
   };
@@ -75,6 +81,16 @@ export default function Country() {
           }
         />
         <CountryDetail title="Area" data={`${country?.area} km²`} />
+        <CountryDetail title="Currency" data={country?.currencies?.[0]?.name} />
+        <CountryDetail
+          title="Timezone"
+          data={country?.timezones.map((item, index, array) =>
+            index === array.length - 1 ? item : item + ", "
+          )}
+        />
+      </View>
+      <View style={tw`gap-2`}>
+        <CountryDetail title="Driving Side" data={country?.car.side} />
       </View>
     </View>
   );
