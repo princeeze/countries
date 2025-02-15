@@ -1,3 +1,8 @@
+export type SortedCountries = {
+  title: string;
+  data: AllCountries[];
+};
+
 export interface AllCountries {
   name: Name;
   tld?: string[];
