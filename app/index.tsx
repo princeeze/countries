@@ -18,7 +18,7 @@ import darkLogo from "@/assets/images/ex_logo_dark.png";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { fetch } from "expo/fetch";
 import { AllCountries, SortedCountries } from "@/lib/types";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 
 type Sections = {
@@ -27,12 +27,11 @@ type Sections = {
 export default function Home() {
   const router = useRouter();
   const [colorScheme, toggleColorScheme] = useAppColorScheme(tw);
+  const [inputValue, setInputValue] = useState("");
 
   // fetch countries
   const getCountries = async (): Promise<SortedCountries[]> => {
-    const response = await fetch(
-      "https://restcountries.com/v3.1/all?fields=name,capital,flags,cca3,population,region,languages,area"
-    );
+    const response = await fetch("https://restcountries.com/v3.1/all");
     const unSorterdCountries: AllCountries[] = await response.json();
     const sections: Sections = {};
     unSorterdCountries.forEach((country) => {
@@ -52,6 +51,25 @@ export default function Home() {
       };
     });
     return sortedSections;
+  };
+
+  //filter countries
+  const filterCountries = (item: SortedCountries[], query: string) => {
+    if (!query) return item;
+    const filteredValue = item
+      .map((section) => ({
+        title: section.title,
+        data: section.data.filter(
+          (country) =>
+            country.name.common.toLowerCase().includes(query.toLowerCase()) ||
+            country.capital?.[0]
+              ?.toLowerCase()
+              ?.includes(query.toLowerCase()) ||
+            country.region.toLowerCase().includes(query.toLowerCase())
+        ),
+      }))
+      .filter((section) => section.data.length > 0);
+    return filteredValue;
   };
 
   // Queries
@@ -138,6 +156,10 @@ export default function Home() {
             <TextInput
               placeholder="Search Country"
               placeholderTextColor={"#EAECF0"}
+              value={inputValue}
+              onChangeText={(text) => {
+                setInputValue(text);
+              }}
               style={tw`ml-2 flex-1 py-3 text-black dark:text-[#EAECF0]`}
             />
           </View>
@@ -181,7 +203,7 @@ export default function Home() {
           </View>
         ) : (
           <SectionList
-            sections={data}
+            sections={filterCountries(data, inputValue)}
             renderItem={renderCountryItem}
             renderSectionHeader={renderSectionHeader}
             stickySectionHeadersEnabled
